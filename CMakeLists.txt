@@ -3,8 +3,6 @@ project(omemo_test)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(omemo_test main.cpp my_test_common.hpp my_test_common.cpp)
-
 if(WIN32) # Install dlls in the same directory as the executable on Windows
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
@@ -17,4 +15,5 @@ FetchContent_MakeAvailable(libomemo)
 include_directories(${libomemo_SOURCE_DIR}/src)
 include_directories(${libomemo_SOURCE_DIR}/tests)
 
-target_link_libraries(omemo_test PRIVATE omemo-c)
+add_executable(omemo_test main.cpp my_test_common.hpp my_test_common.cpp)
+target_link_libraries(omemo_test PRIVATE signal-protocol-c)
