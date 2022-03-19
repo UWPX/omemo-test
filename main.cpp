@@ -12,6 +12,7 @@
 #include <session_pre_key.h>
 #include <key_helper.h>
 #include <curve.h>
+#include <random>
 #include "my_test_common.hpp"
 
 uint8_t get_hex_val(char c)
@@ -55,29 +56,43 @@ std::string to_base_16(const std::vector<uint8_t> &data)
     return result;
 }
 
+int test_random_generator(uint8_t *data, size_t len, void *user_data)
+{
+    static std::random_device dev;
+    for(size_t i = 0; i< len; i++) {
+        data[i] = dev();
+    }
+    return 0;
+}
+
 int main(void)
 {
     // Init:
     signal_context *global_context;
     signal_context_create(&global_context, nullptr);
     // setup_crypot_ctx(global_context);
-    // signal_context_set_crypto_provider(global_context, &provider);
+    signal_crypto_provider provider{};
+    provider.random_func = &test_random_generator;
+    signal_context_set_crypto_provider(global_context, &provider);
     // signal_context_set_locking_functions(global_context, lock_function, unlock_function);
-
+    
     std::vector<uint8_t> ident_priv = from_base_16("1498b5467a63dffa2dc9d9e069caf075d16fc33fdd4c3b01bfadae6433767d93");
+    std::string st = to_base_16(ident_priv);
     ec_private_key *ident_private_key = nullptr;
     int result = curve_decode_private_point(&ident_private_key, ident_priv.data(), ident_priv.size(), global_context);
     assert(result == 0);
-    std::vector<uint8_t> ident_pub = from_base_16("05b7a3c12dc0c8c748ab07525b701122b88bd78f600c76342d27f25e5f92444cde");
-    ec_public_key *ident_public_key = nullptr;
-    result = curve_decode_point(&ident_public_key, ident_pub.data(), ident_pub.size(), global_context);
+
+    std::vector<uint8_t> pre_priv = from_base_16("181c0ed79c361f2d773f3aa8d5934569395a1c1b4a8514d140a7dcde92688579");
+    ec_private_key *pre_private_key = nullptr;
+    result = curve_decode_private_point(&pre_private_key, pre_priv.data(), pre_priv.size(), global_context);
+    assert(result == 0);
+    std::vector<uint8_t> pre_pub = from_base_16("05b30aad2471f7186bdb34951747cf81a67245144260e20ffe5bf7748202d6572c");
+    ec_public_key *pre_public_key = nullptr;
+    result = curve_decode_point(&pre_public_key, pre_pub.data(), pre_pub.size(), global_context);
     assert(result == 0);
 
-    ratchet_identity_key_pair *identity_key_pair = nullptr;
-    ratchet_identity_key_pair_create(&identity_key_pair, ident_public_key, ident_private_key);
-
     signal_buffer *public_buf = nullptr;
-    result = ec_public_key_serialize(&public_buf, ident_public_key);
+    result = ec_public_key_serialize(&public_buf, pre_public_key);
     assert(result == 0);
 
     signal_buffer *signature_buf = nullptr;
@@ -86,6 +101,7 @@ int main(void)
                               ident_private_key,
                               signal_buffer_data(public_buf),
                               signal_buffer_len(public_buf));
+    std::string sig_str = to_base_16(std::vector<uint8_t>(signal_buffer_data(signature_buf), signal_buffer_data(signature_buf) + signal_buffer_len(signature_buf)));
 
     /*session_signed_pre_key *signed_pre_key;
     result = signal_protocol_key_helper_generate_signed_pre_key(&signed_pre_key, identity_key_pair, 5, std::chrono::system_clock::now().time_since_epoch().count(), global_context);
@@ -100,7 +116,7 @@ int main(void)
     uint32_t registration_id;
     signal_protocol_key_helper_pre_key_list_node *pre_keys_head;
 
-    signal_protocol_key_helper_generate_identity_key_pair(&identity_key_pair, global_context);
+    // signal_protocol_key_helper_generate_identity_key_pair(&identity_key_pair, global_context);
     signal_protocol_key_helper_generate_registration_id(&registration_id, 0, global_context);
     signal_protocol_key_helper_generate_pre_keys(&pre_keys_head, 1, 100, global_context);
 

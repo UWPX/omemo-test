@@ -10,10 +10,11 @@ endif()
 
 include(FetchContent)
 set(BUILD_TESTING OFF)
-FetchContent_Declare(libomemo GIT_REPOSITORY https://github.com/dino/libomemo-c.git)
+FetchContent_Declare(libomemo GIT_REPOSITORY https://github.com/dino/libomemo-c.git
+                              GIT_TAG omemo)
 FetchContent_MakeAvailable(libomemo)
 include_directories(${libomemo_SOURCE_DIR}/src)
 include_directories(${libomemo_SOURCE_DIR}/tests)
 
 add_executable(omemo_test main.cpp my_test_common.hpp my_test_common.cpp)
-target_link_libraries(omemo_test PRIVATE signal-protocol-c)
+target_link_libraries(omemo_test PRIVATE omemo-c)
