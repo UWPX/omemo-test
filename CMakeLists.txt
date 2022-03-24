@@ -10,7 +10,7 @@ endif()
 
 include(FetchContent)
 set(BUILD_TESTING OFF)
-FetchContent_Declare(libomemo GIT_REPOSITORY https://github.com/dino/libomemo-c.git
+FetchContent_Declare(libomemo GIT_REPOSITORY https://github.com/UWPX/libomemo-c
                               GIT_TAG omemo)
 FetchContent_MakeAvailable(libomemo)
 include_directories(${libomemo_SOURCE_DIR}/src)
